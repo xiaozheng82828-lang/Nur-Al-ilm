@@ -1,0 +1,7 @@
+{
+  "name": "Nur Al-Ilm: Islamic Knowledge Assistant",
+  "description": "A respectful and intelligent Islamic AI assistant that provides accurate information on Duas, Namaz, and Islamic teachings using real-time search. Features strict moderation to ensure a safe and respectful environment.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
