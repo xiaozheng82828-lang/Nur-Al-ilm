@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Moon, Star, RefreshCw, ShieldAlert, BookOpen, Sparkles, Mic, MicOff, MoreVertical } from 'lucide-react';
-import { checkContentSafety, generateIslamicAnswer, translateContent, generateSpeech } from './services/geminiService';
+import { checkContentSafety, generateIslamicAnswer, translateContent, generateSpeech } from './components/geminiService';
 import { Message, MessageType, UserStatus, SafetyStatus, AppView } from './types';
 import { SuspendedScreen } from './components/SuspendedScreen';
 import { ChatMessage } from './components/ChatMessage';
