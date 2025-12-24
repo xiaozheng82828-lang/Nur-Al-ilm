@@ -4,11 +4,11 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 export const checkContentSafety = async (content: string) => {
   const lowerCaseContent = content.toLowerCase();
   
-  // Yahan maine common gande shabdon ki list daal di hai (Aap aur bhi add kar sakte hain)
+  // Gande Shabdon ki List (Bad Words)
   const badWords = [
-    "pagal", "kutta", "kamina", "bevakuf", "ullu", 
+    "pagal", "kutta", "kamina", "bevakuf", "ullu", "gadha",
     "stupid", "idiot", "nonsense", "rubbish", "die", "kill", "hate",
-    "gali", "bakwas", "haram", "terro" 
+    "gali", "bakwas", "haram", "terro", "porn", "sex"
   ];
 
   // Agar user ne gali di, to 'TAMPERING' return karenge -> Isse App user ko SUSPEND kar dega
@@ -34,16 +34,16 @@ export const generateIslamicAnswer = async (prompt: string) => {
          - Say: "I do not answer such questions. Please maintain respect."
       
       2. QUESTION ANALYSIS:
-         - SIMPLE Question (e.g., "Eid date", "Meaning of Sabr") -> Give SHORT, DIRECT answer (1-2 lines).
+         - SIMPLE Question (e.g., "Ramadan date", "Meaning of Sabr") -> Give SHORT, DIRECT answer (1-2 lines).
          - DEEP Question (e.g., "Rights of parents", "History of Kaaba") -> Give DETAILED answer with Quran/Hadith references.
       
       3. LANGUAGE:
          - Reply in the SAME language as the user (Hindi/Hinglish/English).
     `;
 
-    // Hum 'gemini-2.0-flash-exp' use kar rahe hain kyunki ye aapke liye sahi chal raha tha
+    // --- UPDATE: 'gemini-1.5-flash-8b' use kar rahe hain (High Speed & High Limit) ---
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -58,6 +58,7 @@ export const generateIslamicAnswer = async (prompt: string) => {
     const data = await response.json();
 
     if (data.error) {
+        // Agar ye model bhi na chale, to user ko batayenge
         return { text: `❌ Google Error: ${data.error.message}`, sources: [] };
     }
 
@@ -77,7 +78,7 @@ export const generateSpeech = async (text: string) => null;
 
 export const getIslamicNews = async () => {
   return [
-    { id: 1, title: "Safety Update", summary: "Anti-Abuse System is now Active.", source: "System", time: "Now", url: "#" }
+    { id: 1, title: "Nur Al-Ilm", summary: "Secure & Fast Mode Active.", source: "System", time: "Now", url: "#" }
   ];
 };
 
