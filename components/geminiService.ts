@@ -1,87 +1,78 @@
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-// --- 1. SECURITY GUARD (Gaali Galoch Rokne Wala) ---
+// --- 1. SECURITY GUARD (Bad Words Filter) ---
 export const checkContentSafety = async (content: string) => {
-  const lowerCaseContent = content.toLowerCase();
+  const lower = content.toLowerCase();
+  const badWords = ["pagal", "kutta", "kamina", "stupid", "idiot", "die", "kill", "porn", "sex", "haram", "terro"];
   
-  // Gande Shabdon ki List (Bad Words)
-  const badWords = [
-    "pagal", "kutta", "kamina", "bevakuf", "ullu", "gadha",
-    "stupid", "idiot", "nonsense", "rubbish", "die", "kill", "hate",
-    "gali", "bakwas", "haram", "terro", "porn", "sex"
-  ];
-
-  // Agar user ne gali di, to 'TAMPERING' return karenge -> Isse App user ko SUSPEND kar dega
-  if (badWords.some(word => lowerCaseContent.includes(word))) {
-    return { status: "tampering" }; 
-  }
-
+  if (badWords.some(w => lower.includes(w))) return { status: "tampering" };
   return { status: "SAFE" };
 };
 
-// --- 2. SMART ANSWER GENERATOR ---
+// --- 2. SMART MULTI-MODEL GENERATOR ---
 export const generateIslamicAnswer = async (prompt: string) => {
   if (!API_KEY) return { text: "⚠️ API Key Missing! Settings check karein.", sources: [] };
 
-  try {
-    const systemInstruction = `
-      You are Nur Al-Ilm, a respectful and wise Islamic Assistant.
-      
-      STRICT GUIDELINES:
-      
-      1. SECURITY CHECK:
-         - If the user asks insulting, rude, or inappropriate questions (e.g., mocking religion, dating, bad words), REFUSE politely.
-         - Say: "I do not answer such questions. Please maintain respect."
-      
-      2. QUESTION ANALYSIS:
-         - SIMPLE Question (e.g., "Ramadan date", "Meaning of Sabr") -> Give SHORT, DIRECT answer (1-2 lines).
-         - DEEP Question (e.g., "Rights of parents", "History of Kaaba") -> Give DETAILED answer with Quran/Hadith references.
-      
-      3. LANGUAGE:
-         - Reply in the SAME language as the user (Hindi/Hinglish/English).
-    `;
+  const systemInstruction = `
+    You are Nur Al-Ilm, an Islamic Assistant.
+    RULES:
+    1. SIMPLE questions (Dates, Meaning) -> SHORT answer (1-2 lines).
+    2. DEEP questions (Rulings, History) -> DETAILED answer with Quran/Hadith.
+    3. LANGUAGE -> Reply in the SAME language as user (Hindi/English).
+    4. SAFETY -> Politely refuse insulting questions.
+  `;
 
-    // --- UPDATE: 'gemini-1.5-flash-8b' use kar rahe hain (High Speed & High Limit) ---
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          contents: [{ 
-            parts: [{ text: `${systemInstruction}\n\nUser Question: ${prompt}` }] 
-          }] 
-        })
+  // List of models to try (in order of preference)
+  // 1. Flash-002 (Stable & Fast)
+  // 2. Flash (Standard)
+  // 3. 2.0 Exp (Backup, has limits)
+  // 4. Pro (Old but reliable)
+  const models = [
+    "gemini-1.5-flash-002",
+    "gemini-1.5-flash", 
+    "gemini-2.0-flash-exp",
+    "gemini-pro"
+  ];
+
+  for (const model of models) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            contents: [{ 
+              parts: [{ text: `${systemInstruction}\n\nUser Question: ${prompt}` }] 
+            }] 
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      // Agar Model mil gaya aur jawab aaya
+      if (!data.error && data.candidates && data.candidates.length > 0) {
+        return { text: data.candidates[0].content.parts[0].text, sources: ["Quran & Sunnah"] };
       }
-    );
+      
+      // Agar 'Not Found' error aaya to loop agle model par jayega
+      console.log(`Model ${model} failed, trying next...`);
 
-    const data = await response.json();
-
-    if (data.error) {
-        // Agar ye model bhi na chale, to user ko batayenge
-        return { text: `❌ Google Error: ${data.error.message}`, sources: [] };
+    } catch (e) {
+      // Network error, try next
     }
-
-    if (!data.candidates || data.candidates.length === 0) {
-        return { text: "Maaf karein, main iska jawab nahi de sakta.", sources: [] };
-    }
-
-    return { text: data.candidates[0].content.parts[0].text, sources: ["Quran & Sunnah"] };
-
-  } catch (error: any) {
-    return { text: "Network Error. Please try again.", sources: [] };
   }
+
+  // Agar saare models fail ho gaye
+  return { text: "Maaf karein, abhi server busy hai. Thodi der baad try karein.", sources: [] };
 };
 
 export const translateContent = async (text: string, l: string) => text;
 export const generateSpeech = async (text: string) => null;
 
 export const getIslamicNews = async () => {
-  return [
-    { id: 1, title: "Nur Al-Ilm", summary: "Secure & Fast Mode Active.", source: "System", time: "Now", url: "#" }
-  ];
+  return [{ id: 1, title: "Nur Al-Ilm", summary: "Auto-Fix System Active.", source: "System", time: "Now", url: "#" }];
 };
 
-export const getHijriDate = async () => {
-    return { date: "1447 AH", event: "Islamic Date" };
-};
+export const getHijriDate = async () => ({ date: "1447 AH", event: "Islamic Date" });
