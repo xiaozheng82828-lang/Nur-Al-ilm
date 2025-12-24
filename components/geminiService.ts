@@ -1,39 +1,49 @@
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
+// --- 1. SECURITY GUARD (Gaali Galoch Rokne Wala) ---
 export const checkContentSafety = async (content: string) => {
+  const lowerCaseContent = content.toLowerCase();
+  
+  // Yahan maine common gande shabdon ki list daal di hai (Aap aur bhi add kar sakte hain)
+  const badWords = [
+    "pagal", "kutta", "kamina", "bevakuf", "ullu", 
+    "stupid", "idiot", "nonsense", "rubbish", "die", "kill", "hate",
+    "gali", "bakwas", "haram", "terro" 
+  ];
+
+  // Agar user ne gali di, to 'TAMPERING' return karenge -> Isse App user ko SUSPEND kar dega
+  if (badWords.some(word => lowerCaseContent.includes(word))) {
+    return { status: "tampering" }; 
+  }
+
   return { status: "SAFE" };
 };
 
+// --- 2. SMART ANSWER GENERATOR ---
 export const generateIslamicAnswer = async (prompt: string) => {
   if (!API_KEY) return { text: "⚠️ API Key Missing! Settings check karein.", sources: [] };
 
   try {
-    // --- SMART INSTRUCTIONS (Dimaag) ---
     const systemInstruction = `
-      You are Nur Al-Ilm, a wise and intelligent Islamic Assistant.
+      You are Nur Al-Ilm, a respectful and wise Islamic Assistant.
       
-      YOUR GOAL: Analyze the user's question type and adapt your answer style.
-
-      1. IF SIMPLE QUESTION (e.g., Dates, Times, Short meanings):
-         - Give a DIRECT, short answer (1-2 sentences).
-         - Do not give lectures or references unless asked.
-         - Example: "Ramadan 2026 will likely start on Feb 17."
-
-      2. IF RELIGIOUS/DEEP QUESTION (e.g., Rulings, History, Duas, Advice):
-         - Provide a beautiful, detailed answer using Quran and Sunnah.
-         - Show interest and depth. Cite references (Surah/Ayat).
-         - Explain with wisdom and kindness.
-
-      3. IF IRRELEVANT (e.g., Movies, Coding, Politics, Math):
-         - Politely refuse: "I only discuss Islamic topics and guidance."
-
-      4. LANGUAGE RULE:
-         - STRICTLY reply in the SAME language as the user (Hindi/Hinglish/English).
-         - Do not switch languages.
+      STRICT GUIDELINES:
+      
+      1. SECURITY CHECK:
+         - If the user asks insulting, rude, or inappropriate questions (e.g., mocking religion, dating, bad words), REFUSE politely.
+         - Say: "I do not answer such questions. Please maintain respect."
+      
+      2. QUESTION ANALYSIS:
+         - SIMPLE Question (e.g., "Eid date", "Meaning of Sabr") -> Give SHORT, DIRECT answer (1-2 lines).
+         - DEEP Question (e.g., "Rights of parents", "History of Kaaba") -> Give DETAILED answer with Quran/Hadith references.
+      
+      3. LANGUAGE:
+         - Reply in the SAME language as the user (Hindi/Hinglish/English).
     `;
 
+    // Hum 'gemini-2.0-flash-exp' use kar rahe hain kyunki ye aapke liye sahi chal raha tha
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -48,11 +58,11 @@ export const generateIslamicAnswer = async (prompt: string) => {
     const data = await response.json();
 
     if (data.error) {
-        return { text: `❌ Error: ${data.error.message}`, sources: [] };
+        return { text: `❌ Google Error: ${data.error.message}`, sources: [] };
     }
 
     if (!data.candidates || data.candidates.length === 0) {
-        return { text: "Maaf karein, jawab nahi mila.", sources: [] };
+        return { text: "Maaf karein, main iska jawab nahi de sakta.", sources: [] };
     }
 
     return { text: data.candidates[0].content.parts[0].text, sources: ["Quran & Sunnah"] };
@@ -62,13 +72,12 @@ export const generateIslamicAnswer = async (prompt: string) => {
   }
 };
 
-// Baaki functions same rahenge
 export const translateContent = async (text: string, l: string) => text;
 export const generateSpeech = async (text: string) => null;
 
 export const getIslamicNews = async () => {
   return [
-    { id: 1, title: "Nur Al-Ilm", summary: "Smart Islamic Assistant Ready.", source: "System", time: "Now", url: "#" }
+    { id: 1, title: "Safety Update", summary: "Anti-Abuse System is now Active.", source: "System", time: "Now", url: "#" }
   ];
 };
 
