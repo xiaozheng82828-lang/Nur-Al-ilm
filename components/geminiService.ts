@@ -1,51 +1,73 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-if (!API_KEY) {
-  console.error("Missing Gemini API Key. Make sure VITE_GEMINI_API_KEY is set in Netlify.");
-}
-
-const genAI = new GoogleGenerativeAI(API_KEY || "dummy_key");
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+// Helper to check API Key
+const getApiKey = () => {
+  if (!API_KEY) {
+    console.error("⚠️ Error: VITE_GEMINI_API_KEY nahi mila! Netlify check karein.");
+    return null;
+  }
+  return API_KEY;
+};
 
 export const checkContentSafety = async (content: string) => {
-  // Simple check logic to prevent API overload for now
+  // Basic filter (API call bachane ke liye)
   const lower = content.toLowerCase();
-  const badWords = ["hate", "violence", "kill"]; // Add more basic filters if needed
-  if (badWords.some(word => lower.includes(word))) {
+  const badWords = ["kill", "suicide", "hate", "violence"];
+  if (badWords.some(w => lower.includes(w))) {
     return { status: "UNSAFE" };
   }
   return { status: "SAFE" };
 };
 
 export const generateIslamicAnswer = async (prompt: string) => {
+  const key = getApiKey();
+  if (!key) return { text: "System Error: API Key missing.", sources: [] };
+
   try {
-    const result = await model.generateContent(`
-      You are Nur Al-Ilm, a knowledgeable Islamic assistant. 
-      Provide a respectful, accurate answer based on Quran and Sunnah for: "${prompt}".
-      Format the answer nicely.
-    `);
-    const response = await result.response;
-    return { text: response.text(), sources: ["Quran/Sunnah General Knowledge"] };
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `You are Nur Al-Ilm, a polite Islamic assistant. Answer strictly based on Quran and Sunnah: ${prompt}` }] }]
+        })
+      }
+    );
+
+    const data = await response.json();
+    const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    return { 
+      text: answer || "Maaf karein, main abhi jawab nahi de pa raha.", 
+      sources: ["Quran & Sunnah"] 
+    };
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    return { text: "I apologize, I am having trouble connecting right now. Please try again.", sources: [] };
+    console.error("API Error:", error);
+    return { text: "Network Error. Please try again.", sources: [] };
   }
 };
 
 export const translateContent = async (text: string, targetLang: string) => {
+  const key = getApiKey();
+  if (!key) return text;
+
   try {
-    const result = await model.generateContent(`Translate this Islamic text to ${targetLang}: "${text}"`);
-    return result.response.text();
-  } catch (error) {
-    return text; // Return original if translation fails
-  }
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `Translate this Islamic text to ${targetLang}: "${text}"` }] }]
+        })
+      }
+    );
+    const data = await response.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || text;
+  } catch (e) { return text; }
 };
 
 export const generateSpeech = async (text: string) => {
-  // Speech generation is complex and requires specific browser APIs or paid services.
-  // Returning null for now to prevent crashes.
-  console.log("Speech generation requested for:", text.substring(0, 20) + "...");
-  return null;
+  return null; // Audio feature filhal disabled hai
 };
