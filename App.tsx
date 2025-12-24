@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Moon, Star, RefreshCw, ShieldAlert, BookOpen, Sparkles, Mic, MicOff, MoreVertical } from 'lucide-react';
+// Ye neeche wali line sabse zaruri hai (Path fix kiya hai):
 import { checkContentSafety, generateIslamicAnswer, translateContent, generateSpeech } from './components/geminiService';
 import { Message, MessageType, UserStatus, SafetyStatus, AppView } from './types';
 import { SuspendedScreen } from './components/SuspendedScreen';
