@@ -5,7 +5,7 @@ export const checkContentSafety = async (content: string) => {
 };
 
 export const generateIslamicAnswer = async (prompt: string) => {
-  if (!API_KEY) return { text: "API Key Missing in Vercel settings.", sources: [] };
+  if (!API_KEY) return { text: "API Key missing.", sources: [] };
   try {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
@@ -22,3 +22,15 @@ export const generateIslamicAnswer = async (prompt: string) => {
 
 export const translateContent = async (text: string, l: string) => text;
 export const generateSpeech = async (text: string) => null;
+
+// --- Ye Missing Functions Add Kiye Hain ---
+export const getIslamicNews = async () => {
+  return [
+    { id: 1, title: "Welcome to Nur Al-Ilm", summary: "Your AI assistant is ready.", source: "System", time: "Now", url: "#" },
+    { id: 2, title: "Ramadan Preparation", summary: "Prepare for the holy month.", source: "Guide", time: "1d ago", url: "#" }
+  ];
+};
+
+export const getHijriDate = async () => {
+    return { date: "1445 AH", event: "Islamic Date" };
+};
