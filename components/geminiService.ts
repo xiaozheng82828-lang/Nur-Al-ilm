@@ -5,8 +5,8 @@ export const checkContentSafety = async (content: string) => {
 };
 
 export const generateIslamicAnswer = async (prompt: string) => {
-  // 1. Check if Key exists in code
-  if (!API_KEY) return { text: "⚠️ System Error: Vercel Settings mein 'VITE_GEMINI_API_KEY' nahi mili. Kripya Environment Variables check karein aur Redeploy karein.", sources: [] };
+  // Check 1: Kya Key Code tak pahunchi?
+  if (!API_KEY) return { text: "⚠️ ERROR: API Key nahi mili! Vercel Settings check karein.", sources: [] };
 
   try {
     const response = await fetch(
@@ -14,38 +14,30 @@ export const generateIslamicAnswer = async (prompt: string) => {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: `You are a helpful Islamic Assistant. Question: ${prompt}` }] }] })
+        body: JSON.stringify({ contents: [{ parts: [{ text: `You are an Islamic assistant. Answer this: ${prompt}` }] }] })
       }
     );
 
     const data = await response.json();
 
-    // 2. Check for Google Errors (Ye sabse zaruri hai)
+    // Check 2: Google ne kya kaha?
     if (data.error) {
-        return { text: `❌ Google API Error: ${data.error.message}`, sources: [] };
+        return { text: `❌ GOOGLE ERROR: ${data.error.message}`, sources: [] };
     }
 
-    // 3. Check for Safety Blocks
     if (!data.candidates || data.candidates.length === 0) {
-        return { text: "⚠️ Jawab Block ho gaya. (Safety Filter triggered or Empty Response).", sources: [] };
+        return { text: "⚠️ Jawab Empty aaya. Shayad Safety Filter ne rok diya.", sources: [] };
     }
 
     return { text: data.candidates[0].content.parts[0].text, sources: ["Quran & Sunnah"] };
 
   } catch (error: any) {
-    return { text: `❌ Connection Error: ${error.message}`, sources: [] };
+    return { text: `❌ NETWORK ERROR: ${error.message}`, sources: [] };
   }
 };
 
+// Baaki functions same rahenge
 export const translateContent = async (text: string, l: string) => text;
 export const generateSpeech = async (text: string) => null;
-
-export const getIslamicNews = async () => {
-  return [
-    { id: 1, title: "App Live", summary: "Nur Al-Ilm is now running on Vercel.", source: "System", time: "Now", url: "#" }
-  ];
-};
-
-export const getHijriDate = async () => {
-    return { date: "1445 AH", event: "Islamic Date" };
-};
+export const getIslamicNews = async () => [{ id: 1, title: "App Live", summary: "System Running", source: "System", time: "Now", url: "#" }];
+export const getHijriDate = async () => ({ date: "1445 AH", event: "Islamic Date" });
