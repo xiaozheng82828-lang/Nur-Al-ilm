@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getIslamicNews } from '../services/geminiService';
+import { getIslamicNews } from './geminiService';
 import { NewsItem } from '../types';
 import { Newspaper, Loader2, MapPin, Clock, User, Globe } from 'lucide-react';
 
